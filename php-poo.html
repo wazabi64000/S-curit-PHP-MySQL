@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PHP POO — Cours Sécurité PHP & MySQL</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <a href="#contenu" class="skip-link">Aller au contenu</a>
+  <header class="site-header" role="banner">
+    <div class="container navbar">
+      <a class="brand" href="index.html" aria-label="Accueil">
+        <span class="logo">SP</span>
+        <span>Sécurité PHP & MySQL</span>
+      </a>
+      <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false" aria-label="Ouvrir le menu">
+        <span class="bar"></span><span aria-hidden="true">Menu</span>
+      </button>
+      <nav id="primary-nav" class="nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="index.html">Introduction</a></li>
+          <li><a href="php-poo.html">PHP POO</a></li>
+          <li><a href="mysql.html">MySQL & PDO</a></li>
+          <li><a href="vulnerabilites.html">Vulnérabilités</a></li>
+          <li><a href="securisation.html">Sécurisation</a></li>
+          <li><a href="modules.html">Modules & Outils</a></li>
+          <li><a href="projet.html">Projet final</a></li>
+          <li><a href="exercices.html">Exercices</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenu" class="container">
+
+    <!-- HERO -->
+    <section class="hero card">
+      <h1>🧱 Bases de PHP Orienté Objet</h1>
+      <p>
+        La POO te permet d’organiser ton code comme une brigade de cuisine :  
+        chaque chef (classe) a un rôle précis et prépare un plat (objet) selon une recette (méthodes).  
+        Cela rend ton code plus clair, réutilisable et plus facile à sécuriser.
+      </p>
+    </section>
+
+    <!-- 1. Théorie -->
+    <section class="card">
+      <h2>1) Introduction à la POO</h2>
+      <p>La POO permet de : </p>
+      <ul>
+        <li>Organiser le code en <strong>entités logiques</strong> (classes)</li>
+        <li>Créer des <strong>objets</strong> réutilisables</li>
+        <li>Encapsuler la logique pour protéger les données</li>
+        <li>Améliorer la sécurité et la maintenance</li>
+      </ul>
+      <p>💡 Exemple : créer une classe <code>User</code> pour gérer les utilisateurs :</p>
+      <pre><code class="php">
+class User {
+    private $username;       // Le nom de l'utilisateur (propriété privée)
+    private $passwordHash;   // Le mot de passe haché
+
+    public function __construct($username, $passwordHash) {
+        $this->username = $username;
+        $this->passwordHash = $passwordHash;
+    }
+
+    public function getUsername() {
+        return $this->username;
+    }
+
+    public function verifyPassword($password) {
+        // Vérifie que le mot de passe correspond au hash
+        return password_verify($password, $this->passwordHash);
+    }
+}
+      </code></pre>
+      <p>💡 Analogie : la classe = plan de recette, l’objet = plat préparé.</p>
+    </section>
+
+    <!-- 2. Exemple vulnérable -->
+    <section class="card">
+      <h2>2) Exemple sans protection</h2>
+      <div class="example">
+        <p>Version simple mais vulnérable : mots de passe en clair et concaténation SQL.</p>
+        <pre><code class="php">
+// login_vuln.php
+$user = $_POST['username'];
+$pass = $_POST['password'];
+
+// ❌ Mauvaise pratique : concaténation directe
+$sql  = "SELECT * FROM users WHERE username = '$user' AND password = '$pass'";
+$stmt = $pdo->query($sql);
+
+if ($stmt && $stmt->rowCount() > 0) {
+    echo "✅ Bienvenue $user (mais vulnérable !)";
+} else {
+    echo "❌ Identifiants invalides";
+}
+        </code></pre>
+        <p>⚠️ Problèmes : injection SQL possible, mots de passe en clair, pas de séparation logique.</p>
+      </div>
+    </section>
+
+    <!-- 3. Exemple sécurisé -->
+    <section class="card">
+      <h2>3) Exemple avec protection</h2>
+      <div class="secure">
+        <p>
+          Version sécurisée avec POO, PDO et mots de passe hachés. On encapsule la logique dans une classe.
+        </p>
+        <pre><code class="php">
+// LoginService.php
+class LoginService {
+    private $pdo;
+
+    public function __construct($pdo) {
+        $this->pdo = $pdo;
+    }
+
+    public function login($username, $password) {
+        // ✅ Requête préparée pour éviter l'injection SQL
+        $stmt = $this->pdo->prepare("SELECT username, password FROM users WHERE username = :u");
+        $stmt->execute([':u' => $username]);
+        $user = $stmt->fetch();
+
+        // ✅ Vérification sécurisée du mot de passe
+        if ($user && password_verify($password, $user['password'])) {
+            return "✅ Bienvenue $username (sécurisé)";
+        }
+        return "❌ Identifiants invalides";
+    }
+}
+
+// Utilisation
+$loginService = new LoginService($pdo);
+echo $loginService->login($_POST['username'], $_POST['password']);
+        </code></pre>
+        <p>💡 Ici, la classe <code>LoginService</code> gère toute la logique d’authentification.  
+        Les entrées utilisateurs sont sécurisées et les mots de passe sont hachés.</p>
+      </div>
+    </section>
+
+    <!-- 4. Résumé -->
+    <section class="card">
+      <h2>4) Résumé et bonnes pratiques POO</h2>
+      <ul>
+        <li>Modéliser les entités avec des classes : <code>User</code>, <code>Post</code>, <code>Database</code></li>
+        <li>Encapsuler les propriétés avec <code>private</code> et utiliser getters/setters</li>
+        <li>Isoler la logique de sécurité dans des classes spécifiques</li>
+        <li>Ne jamais concaténer directement les entrées utilisateurs dans SQL</li>
+        <li>Utiliser <code>password_hash</code> et <code>password_verify</code> pour sécuriser les mots de passe</li>
+        <li>Ajouter des commentaires et explications pour chaque étape</li>
+      </ul>
+      <p>💡 Mini-exercice : créer une classe <code>Post</code> avec titre et contenu, et une méthode pour afficher l’article en échappant les caractères spéciaux.</p>
+    </section>
+
+  </main>
+
+  <footer role="contentinfo">
+    <div class="container">
+      <p>© PHP POO · Cours pédagogique — PHP POO · MySQL · Sécurité · Accessibilité</p>
+    </div>
+  </footer>
+</body>
+</html>

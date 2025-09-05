@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sécurisation — Cours Sécurité PHP & MySQL</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <a href="#contenu" class="skip-link">Aller au contenu</a>
+  <header class="site-header" role="banner">
+    <div class="container navbar">
+      <a class="brand" href="index.html" aria-label="Accueil">
+        <span class="logo">SP</span>
+        <span>Sécurité PHP & MySQL</span>
+      </a>
+      <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false" aria-label="Ouvrir le menu">
+        <span class="bar"></span><span aria-hidden="true">Menu</span>
+      </button>
+      <nav id="primary-nav" class="nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="index.html">Introduction</a></li>
+<li><a href="php-poo.html">PHP POO</a></li>
+<li><a href="mysql.html">MySQL & PDO</a></li>
+<li><a href="vulnerabilites.html">Vulnérabilités</a></li>
+<li><a href="securisation.html">Sécurisation</a></li>
+<li><a href="modules.html">Modules & Outils</a></li>
+<li><a href="projet.html">Projet final</a></li>
+<li><a href="exercices.html">Exercices</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenu" class="container">
+    
+<section class="hero card">
+  <h1>🛡️ Sécurisation & bonnes pratiques</h1>
+  <p>Validation, évasion, droits, mots de passe, rate limit, logs.</p>
+</section>
+
+<section class="card">
+  <h2>1) Introduction</h2>
+  <p>Principe de moindre privilège, défense en profondeur, sécurité par défaut.</p>
+</section>
+
+<section class="card">
+  <h2>2) Exemple sans protection</h2>
+  <div class="example">
+<pre><code>// Upload non filtré
+move_uploaded_file($_FILES['file']['tmp_name'], "uploads/" . $_FILES['file']['name']);
+</code></pre>
+  </div>
+</section>
+
+<section class="card">
+  <h2>3) Exemple avec protection</h2>
+  <div class="secure">
+<pre><code>// Upload sécurisé (type + nom + dossier dédié hors webroot idéalement)
+$allowed = ['image/png','image/jpeg','application/pdf'];
+$f = $_FILES['file'];
+if (in_array(mime_content_type($f['tmp_name']), $allowed, true) && $f['size'] &lt; 2*1024*1024) {{
+  $safe = bin2hex(random_bytes(16)) . "." . pathinfo($f['name'], PATHINFO_EXTENSION);
+  move_uploaded_file($f['tmp_name'], __DIR__ . "/uploads/" . $safe);
+}}
+</code></pre>
+  </div>
+</section>
+
+  </main>
+
+  <footer role="contentinfo">
+    <div class="container">
+      <p>© Sécurisation · Cours pédagogique — PHP POO · MySQL · Sécurité · Accessibilité</p>
+    </div>
+  </footer>
+</body>
+</html>

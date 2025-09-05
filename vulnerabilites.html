@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vulnérabilités — Cours Sécurité PHP & MySQL</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <a href="#contenu" class="skip-link">Aller au contenu</a>
+  <header class="site-header" role="banner">
+    <div class="container navbar">
+      <a class="brand" href="index.html" aria-label="Accueil">
+        <span class="logo">SP</span>
+        <span>Sécurité PHP & MySQL</span>
+      </a>
+      <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false" aria-label="Ouvrir le menu">
+        <span class="bar"></span><span aria-hidden="true">Menu</span>
+      </button>
+      <nav id="primary-nav" class="nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="index.html">Introduction</a></li>
+          <li><a href="php-poo.html">PHP POO</a></li>
+          <li><a href="mysql.html">MySQL & PDO</a></li>
+          <li><a href="vulnerabilites.html">Vulnérabilités</a></li>
+          <li><a href="securisation.html">Sécurisation</a></li>
+          <li><a href="modules.html">Modules & Outils</a></li>
+          <li><a href="projet.html">Projet final</a></li>
+          <li><a href="exercices.html">Exercices</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenu" class="container">
+
+    <section class="hero card">
+      <h1>🧨 Vulnérabilités courantes</h1>
+      <p>SQLi, XSS, CSRF, sessions, uploads — nous allons les comprendre avec des exemples concrets.</p>
+    </section>
+
+    <!-- SQL Injection -->
+    <section class="card">
+      <h2>1) SQL Injection (Injection SQL)</h2>
+      <p>Analogie : un pirate glisse des instructions dans la commande que tu passes au serveur, comme si quelqu’un écrivait dans la commande de la cuisine pour voler un plat.</p>
+      <div class="example">
+        <p><strong>⚠️ Exemple vulnérable :</strong></p>
+        <pre><code class="php">
+// concaténation directe → injection possible
+$sql = "SELECT * FROM users WHERE username = '" . $_GET['u'] . "'";
+$result = $pdo->query($sql);
+        </code></pre>
+        <p>Test : <code>?u=' OR '1'='1</code> permet de récupérer tous les utilisateurs.</p>
+      </div>
+      <div class="secure">
+        <p><strong>✅ Exemple sécurisé :</strong></p>
+        <pre><code class="php">
+// requête préparée avec PDO
+$stmt = $pdo->prepare("SELECT * FROM users WHERE username = :u");
+$stmt->execute([':u' => $_GET['u']]);
+$user = $stmt->fetch();
+        </code></pre>
+        <p>✅ Les entrées utilisateurs sont traitées comme du texte, aucune instruction SQL n’est injectée.</p>
+      </div>
+    </section>
+
+    <!-- XSS -->
+    <section class="card">
+      <h2>2) XSS (Cross-Site Scripting)</h2>
+      <p>Analogie : quelqu’un écrit un message avec du poison invisible sur ton assiette. Si tu affiches le message sans contrôle, le poison s’exécute dans le navigateur.</p>
+      <div class="example">
+        <p><strong>⚠️ Exemple vulnérable :</strong></p>
+        <pre><code class="php">
+// affichage brut d’un commentaire
+echo $_POST['comment'];
+        </code></pre>
+        <p>Un pirate peut mettre : <code>&lt;script&gt;alert('Hacked')&lt;/script&gt;</code></p>
+      </div>
+      <div class="secure">
+        <p><strong>✅ Exemple sécurisé :</strong></p>
+        <pre><code class="php">
+// échappement HTML
+echo htmlspecialchars($_POST['comment'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        </code></pre>
+        <p>✅ Le code HTML/JS est transformé en texte, donc ne s’exécute pas.</p>
+      </div>
+    </section>
+
+    <!-- CSRF -->
+    <section class="card">
+      <h2>3) CSRF (Cross-Site Request Forgery)</h2>
+      <p>Analogie : quelqu’un envoie une commande à la cuisine en se faisant passer pour toi. Sans vérification, le serveur exécute l’action.</p>
+      <div class="example">
+        <p><strong>⚠️ Exemple vulnérable :</strong></p>
+        <pre><code class="php">
+// formulaire POST sensible sans vérification
+// n’importe qui peut soumettre des actions au nom de l’utilisateur
+        </code></pre>
+      </div>
+      <div class="secure">
+        <p><strong>✅ Exemple sécurisé :</strong></p>
+        <pre><code class="php">
+// générer token CSRF
+$_SESSION['csrf'] = bin2hex(random_bytes(32));
+// ajouter dans le formulaire : <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
+if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) exit('CSRF');
+        </code></pre>
+        <p>✅ Seul un formulaire légitime peut effectuer l’action.</p>
+      </div>
+    </section>
+
+    <!-- Sessions -->
+    <section class="card">
+      <h2>4) Sessions</h2>
+      <p>Analogie : le serveur te donne un badge pour te reconnaître. Si le badge est volé, un pirate peut se faire passer pour toi.</p>
+      <div class="example">
+        <p><strong>⚠️ Mauvaise pratique :</strong></p>
+        <pre><code class="php">
+// session non sécurisée
+session_start();
+$_SESSION['user'] = $username;
+        </code></pre>
+      </div>
+      <div class="secure">
+        <p><strong>✅ Bonne pratique :</strong></p>
+        <pre><code class="php">
+// session sécurisée
+session_start([
+    'cookie_httponly' => true,
+    'cookie_secure' => true, // si HTTPS
+    'use_strict_mode' => true
+]);
+$_SESSION['user'] = $username;
+        </code></pre>
+      </div>
+    </section>
+
+    <!-- Upload -->
+    <section class="card">
+      <h2>5) Upload de fichiers</h2>
+      <p>Analogie : quelqu’un apporte un plat suspect dans ta cuisine. Si tu ne vérifies pas, ça peut casser ton serveur.</p>
+      <div class="example">
+        <p><strong>⚠️ Vulnérable :</strong></p>
+        <pre><code class="php">
+// upload sans vérification
+move_uploaded_file($_FILES['file']['tmp_name'], "uploads/" . $_FILES['file']['name']);
+        </code></pre>
+        <p>Un pirate peut uploader un script PHP et l’exécuter.</p>
+      </div>
+      <div class="secure">
+        <p><strong>✅ Sécurisé :</strong></p>
+        <pre><code class="php">
+// vérifier type et extension
+$allowed = ['jpg','png','pdf'];
+$ext = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
+if(!in_array(strtolower($ext), $allowed)) exit('Fichier non autorisé');
+// changer nom et répertoire sécurisé
+move_uploaded_file($_FILES['file']['tmp_name'], "uploads/" . bin2hex(random_bytes(8)) . ".$ext");
+        </code></pre>
+        <p>✅ On ne peut plus exécuter de code malveillant via l’upload.</p>
+      </div>
+    </section>
+
+    <!-- Mini exercices -->
+    <section class="card">
+      <h2>6) Exercices pratiques</h2>
+      <ul>
+        <li>Tester l’injection SQL sur un petit formulaire et corriger avec PDO</li>
+        <li>Essayer de poster un commentaire XSS et sécuriser avec <code>htmlspecialchars</code></li>
+        <li>Ajouter un token CSRF sur un formulaire sensible</li>
+        <li>Tester un upload avec fichier dangereux et sécuriser</li>
+        <li>Vérifier les sessions sécurisées avec HttpOnly/Secure</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <footer role="contentinfo">
+    <div class="container">
+      <p>© Vulnérabilités · Cours pédagogique — PHP POO · MySQL · Sécurité · Accessibilité</p>
+    </div>
+  </footer>
+</body>
+</html>

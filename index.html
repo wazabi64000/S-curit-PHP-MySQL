@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Introduction — Cours Sécurité PHP & MySQL</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <a href="#contenu" class="skip-link">Aller au contenu</a>
+  <header class="site-header" role="banner">
+    <div class="container navbar">
+      <a class="brand" href="index.html" aria-label="Accueil">
+        <span class="logo">SP</span>
+        <span>Sécurité PHP & MySQL</span>
+      </a>
+      <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false" aria-label="Ouvrir le menu">
+        <span class="bar"></span><span aria-hidden="true">Menu</span>
+      </button>
+      <nav id="primary-nav" class="nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="index.html">Introduction</a></li>
+          <li><a href="php-poo.html">PHP POO</a></li>
+          <li><a href="mysql.html">MySQL & PDO</a></li>
+          <li><a href="vulnerabilites.html">Vulnérabilités</a></li>
+          <li><a href="securisation.html">Sécurisation</a></li>
+          <li><a href="modules.html">Modules & Outils</a></li>
+          <li><a href="projet.html">Projet final</a></li>
+          <li><a href="exercices.html">Exercices</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenu" class="container">
+    
+    <section class="hero card">
+      <h1>🍔 Introduction : Comprendre la Sécurité Web</h1>
+      <p>
+        Imagine un restaurant :  
+        - Le <strong>client</strong> = l’utilisateur qui passe une commande.<br>
+        - Le <strong>serveur</strong> = le cuisinier qui prépare le plat.<br>
+        - La <strong>cuisine</strong> = la base de données où sont stockés les ingrédients.<br>
+      </p>
+      <p>
+        Normalement, tout est bien organisé. Mais certains « clients » essaient de 
+        <strong>tricher</strong> : entrer en cuisine sans autorisation, voler des recettes ou 
+        modifier les plats. C’est exactement ce que font les pirates avec une application web.  
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>1) Théorie : comment circule l’information</h2>
+      <p>
+        Quand tu te connectes à un site, voici ce qui se passe :
+      </p>
+      <ol>
+        <li>Tu écris ton nom d’utilisateur et ton mot de passe.</li>
+        <li>Le navigateur envoie ces informations au serveur (en PHP).</li>
+        <li>PHP pose une question à la base de données MySQL : « Cet utilisateur existe-t-il ? »</li>
+        <li>MySQL répond oui ou non, et PHP affiche la bonne page.</li>
+      </ol>
+      <p>
+        Si le développeur n’a pas fait attention, un pirate peut <strong>casser ce dialogue</strong> 
+        et tricher. C’est ce qu’on appelle une <em>vulnérabilité</em>.
+      </p>
+    </section>
+
+
+    <section class="card">
+  <h2>🛠️ Préparer son environnement</h2>
+  <p>
+    Avant de commencer les tests de sécurité, il faut installer et configurer un petit 
+    environnement de développement. Pas besoin d’un vrai serveur compliqué !
+  </p>
+
+  <h3>1) Installer un serveur local</h3>
+  <ul>
+    <li>👉 Télécharge et installe <strong>XAMPP</strong>, <strong>MAMP</strong> ou <strong>Laragon</strong> (selon ton système).</li>
+    <li>Ces outils installent automatiquement <strong>PHP</strong>, <strong>MySQL</strong> et <strong>phpMyAdmin</strong>.</li>
+    <li>Une fois installé, lance <strong>Apache</strong> (pour PHP) et <strong>MySQL</strong>.</li>
+    <li>Ouvre <code>http://localhost/</code> dans ton navigateur : si tu vois une page d’accueil, tout est prêt ✅</li>
+  </ul>
+
+  <h3>2) Créer une base de données</h3>
+  <p>On va créer une petite base appelée <code>cours_securite</code>.</p>
+  <pre><code class="sql">
+CREATE DATABASE cours_securite CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE cours_securite;
+  </code></pre>
+
+  <h3>3) Créer une table "users"</h3>
+  <p>La table contiendra des utilisateurs avec un identifiant, un nom et un mot de passe.</p>
+  <pre><code class="sql">
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL
+);
+  </code></pre>
+
+  <h3>4) Ajouter un utilisateur test</h3>
+  <p>On crée un utilisateur <strong>alice</strong> avec le mot de passe <strong>secret123</strong>.</p>
+  <p>Mais attention : dans la version sécurisée, les mots de passe doivent être <strong>hachés</strong>.</p>
+
+  <p>👉 Dans un petit fichier PHP, tape :</p>
+  <pre><code class="php">
+< ?php
+echo password_hash("secret123", PASSWORD_DEFAULT);
+  </code></pre>
+
+  <p>Tu obtiendras quelque chose comme :</p>
+  <pre><code>
+$2y$10$7abcdeF…etc…
+  </code></pre>
+
+  <p>Ensuite, insère l’utilisateur dans MySQL :</p>
+  <pre><code class="sql">
+INSERT INTO users (username, password) 
+VALUES ('alice', '$2y$10$7abcdeFetcetcetcetc');
+  </code></pre>
+
+  <h3>5) Créer les fichiers PHP</h3>
+
+  <h4>a) Version vulnérable</h4>
+  <p>Ce code concatène directement les entrées utilisateur dans la requête SQL → il est <strong>dangereux</strong>.</p>
+  <pre><code class="php">
+// login_vulnerable.php
+<?php
+$dsn = "mysql:host=localhost;dbname=cours_securite;charset=utf8mb4";
+$db_user = "root";
+$db_pass = "";
+
+try {
+  $pdo = new PDO($dsn, $db_user, $db_pass);
+} catch (PDOException $e) {
+  die("Erreur de connexion : " . $e->getMessage());
+}
+
+$username = $_POST['username'];
+$password = $_POST['password'];
+
+// ❌ Mauvaise pratique : concaténation directe
+$sql = "SELECT * FROM users WHERE username = '$username' AND password = '$password'";
+$stmt = $pdo->query($sql);
+
+if ($stmt && $stmt->rowCount() > 0) {
+  echo "✅ Bienvenue $username (mais ce code est vulnérable !)";
+} else {
+  echo "❌ Identifiants invalides";
+}
+?>
+  </code></pre>
+
+  <p>👉 Essaie de te connecter avec :</p>
+  <ul>
+    <li><strong>Utilisateur :</strong> <code>' OR '1'='1</code></li>
+    <li><strong>Mot de passe :</strong> (laisse vide)</li>
+  </ul>
+  <p>Tu verras que l’accès est accordé sans mot de passe ! ⚠️</p>
+
+  <h4>b) Version sécurisée</h4>
+  <p>Ici on utilise <strong>PDO + requêtes préparées</strong> et la vérification des mots de passe hachés.</p>
+  <pre><code class="php">
+// login_secure.php
+<?php
+$dsn = "mysql:host=localhost;dbname=cours_securite;charset=utf8mb4";
+$db_user = "root";
+$db_pass = "";
+
+try {
+  $pdo = new PDO($dsn, $db_user, $db_pass, [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+  ]);
+} catch (PDOException $e) {
+  die("Erreur de connexion : " . $e->getMessage());
+}
+
+$username = $_POST['username'];
+$password = $_POST['password'];
+
+// ✅ Bonne pratique : requête préparée
+$sql = "SELECT * FROM users WHERE username = :username";
+$stmt = $pdo->prepare($sql);
+$stmt->execute(['username' => $username]);
+$user = $stmt->fetch();
+
+if ($user && password_verify($password, $user['password'])) {
+  echo "✅ Bienvenue $username (connexion sécurisée)";
+} else {
+  echo "❌ Identifiants invalides";
+}
+?>
+  </code></pre>
+
+  <p> Maintenant, si tu réessayes l’injection <code>' OR '1'='1</code>, elle ne marche plus 🎉</p>
+
+</section>
+
+
+    <section class="card">
+      <h2>2) Exemple sans protection</h2>
+      <div class="example">
+        <p><strong>Formulaire de connexion vulnérable :</strong></p>
+        <form method="POST" action="login_vulnerable.php">
+          <label>Utilisateur <input type="text" name="username" required></label>
+          <label>Mot de passe <input type="password" name="password" required></label>
+          <button type="submit">Se connecter</button>
+        </form>
+        <p>
+          ⚠️ Dans ce formulaire, les informations sont envoyées au fichier 
+          <code>login_vulnerable.php</code>. Ce fichier met directement les données de l’utilisateur 
+          dans la requête SQL, sans vérifier si elles sont propres.  
+        </p>
+        <p>
+          👉 Cela permet à un pirate de taper quelque chose comme 
+          <code>' OR '1'='1</code> dans le champ « utilisateur » et de se connecter 
+          <strong>sans mot de passe</strong>. C’est ce qu’on appelle une <strong>injection SQL</strong>.
+        </p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3) Exemple avec protection</h2>
+      <div class="secure">
+        <p><strong>Formulaire sécurisé :</strong></p>
+        <form method="POST" action="login_secure.php">
+          <label>Utilisateur <input type="text" name="username" required autocomplete="username"></label>
+          <label>Mot de passe <input type="password" name="password" required autocomplete="current-password"></label>
+          <button type="submit">Se connecter</button>
+        </form>
+        <p>
+          ✅ Cette fois, le fichier <code>login_secure.php</code> utilise 
+          <strong>PDO et des requêtes préparées</strong>. Cela veut dire que :
+        </p>
+        <ul>
+          <li>Les données de l’utilisateur sont traitées comme du texte, pas comme du code.</li>
+          <li>Impossible d’ajouter une commande SQL cachée.</li>
+          <li>Les mots de passe sont stockés avec <code>password_hash</code> et vérifiés avec <code>password_verify</code>.</li>
+          <li>Les cookies de session sont protégés avec les options <code>HttpOnly</code> et <code>Secure</code>.</li>
+        </ul>
+        <p>
+          👉 Résultat : même si un pirate essaie d’injecter du code dans le champ utilisateur, 
+          MySQL l’ignorera et la connexion échouera.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer role="contentinfo">
+    <div class="container">
+      <p>© Introduction · Cours pédagogique — PHP POO · MySQL · Sécurité · Accessibilité</p>
+    </div>
+  </footer>
+</body>
+</html>

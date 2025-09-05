@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Modules & Outils — Cours Sécurité PHP & MySQL</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <script defer src="assets/site.js"></script>
+</head>
+<body>
+  <a href="#contenu" class="skip-link">Aller au contenu</a>
+  <header class="site-header" role="banner">
+    <div class="container navbar">
+      <a class="brand" href="index.html" aria-label="Accueil">
+        <span class="logo">SP</span>
+        <span>Sécurité PHP & MySQL</span>
+      </a>
+      <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false" aria-label="Ouvrir le menu">
+        <span class="bar"></span><span aria-hidden="true">Menu</span>
+      </button>
+      <nav id="primary-nav" class="nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="index.html">Introduction</a></li>
+<li><a href="php-poo.html">PHP POO</a></li>
+<li><a href="mysql.html">MySQL & PDO</a></li>
+<li><a href="vulnerabilites.html">Vulnérabilités</a></li>
+<li><a href="securisation.html">Sécurisation</a></li>
+<li><a href="modules.html">Modules & Outils</a></li>
+<li><a href="projet.html">Projet final</a></li>
+<li><a href="exercices.html">Exercices</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenu" class="container">
+    
+<section class="hero card">
+  <h1>🧩 Modules & outils</h1>
+  <p>Extensions PHP, librairies, scanners de sécurité.</p>
+</section>
+
+<section class="card">
+  <h2>1) Introduction</h2>
+  <ul>
+    <li>Extensions : <code>pdo_mysql</code>, <code>openssl</code>, <code>mbstring</code>, <code>intl</code></li>
+    <li>Fonctions : <code>password_hash</code>, <code>filter_var</code>, <code>random_bytes</code></li>
+    <li>Outils : OWASP ZAP, Burp Suite, SQLMap</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>2) Exemple sans protection</h2>
+  <div class="example"><p>Pas de validation d'entrée, pas de HTTPS, pas de logs.</p></div>
+</section>
+
+<section class="card">
+  <h2>3) Exemple avec protection</h2>
+  <div class="secure">
+    <ul>
+      <li>Forcer HTTPS (HSTS), config PHP (<code>session.cookie_secure=1</code>, <code>session.cookie_httponly=1</code>).</li>
+      <li>Filtrage côté serveur : <code>filter_var($email, FILTER_VALIDATE_EMAIL)</code>.</li>
+      <li>Logs d'accès/erreurs et alertes.</li>
+    </ul>
+  </div>
+</section>
+
+  </main>
+
+  <footer role="contentinfo">
+    <div class="container">
+      <p>© Modules & Outils · Cours pédagogique — PHP POO · MySQL · Sécurité · Accessibilité</p>
+    </div>
+  </footer>
+</body>
+</html>
